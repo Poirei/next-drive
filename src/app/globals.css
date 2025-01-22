@@ -59,6 +59,8 @@ body {
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+    --success: 84 92% 71%;
+    --success-foreground: 280 100% 13%;
   }
 }
 

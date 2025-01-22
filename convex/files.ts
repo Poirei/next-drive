@@ -9,17 +9,14 @@ const hasAccessToOrg = async (
 ) => {
   const user = await getUser(ctx, tokenIdentifier);
 
-  if (!user.orgIds.includes(orgId) || !user.tokenIdentifier.includes(orgId)) {
-    return false;
-  }
-
-  return true;
+  return user.orgIds.includes(orgId) || user.tokenIdentifier.includes(orgId);
 };
 
 export const createFile = mutation({
   args: {
     name: v.string(),
     orgId: v.string(),
+    fileId: v.id("_storage"),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -40,9 +37,10 @@ export const createFile = mutation({
       );
     }
 
-    return await ctx.db.insert("files", {
+    return ctx.db.insert("files", {
       name: args.name,
       orgId: args.orgId,
+      fileId: args.fileId,
     });
   },
 });
@@ -73,4 +71,14 @@ export const getFiles = query({
       .withIndex("by_org_id", (query) => query.eq("orgId", args.orgId))
       .collect();
   },
+});
+
+export const generateUploadUrl = mutation(async (ctx) => {
+  const identity = await ctx.auth.getUserIdentity();
+
+  if (!identity) {
+    throw new ConvexError("You must be logged in to upload a file");
+  }
+
+  return ctx.storage.generateUploadUrl();
 });

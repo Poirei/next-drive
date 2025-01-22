@@ -4,6 +4,7 @@ import "./globals.css";
 import { ConvexClientWithClerkProvider } from "../providers/convex-client-with-clerk-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { Header } from "@/components/header";
+import { Toaster } from "@/components/ui/toaster";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -32,6 +33,7 @@ export default function RootLayout({
           <ConvexClientWithClerkProvider>
             <Header />
             {children}
+            <Toaster />
           </ConvexClientWithClerkProvider>
         </ThemeProvider>
       </body>
