@@ -25,7 +25,7 @@ import { Input } from "@/components/ui/input";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertTriangleIcon,
@@ -35,6 +35,7 @@ import {
   LoaderIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Doc } from "../../convex/_generated/dataModel";
 
 const formSchema = z.object({
   title: z
@@ -48,7 +49,7 @@ const formSchema = z.object({
     .refine((files) => files.length > 0, "Atleast one file is required"),
 });
 
-export default function Upload() {
+export default function Upload(props: { triggerComponent: React.ReactNode }) {
   const { organization, isLoaded: isOrgLoaded } = useOrganization();
   const { isLoaded: isUserLoaded, user } = useUser();
   const createFile = useMutation(api.files.createFile);
@@ -65,6 +66,7 @@ export default function Upload() {
   });
 
   const abortControllerRef = useRef<AbortController | null>(null);
+
   const fileRef = form.register("file");
 
   let orgId = "";
@@ -78,13 +80,24 @@ export default function Upload() {
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
+    const fileType = values.file[0].type;
+
+    const allowedTypes = {
+      "application/pdf": "pdf",
+      "text/plain": "txt",
+      "image/png": "image",
+      "image/jpeg": "image",
+    } as Record<string, Doc<"files">["type"]>;
+
+    console.log(allowedTypes);
+
     try {
       const uploadUrl = await generateUploadUrl();
 
       const result = await fetch(uploadUrl, {
         method: "POST",
         headers: {
-          "Content-Type": values.file[0].type || "text/plain",
+          "Content-Type": fileType || "text/plain",
         },
         body: values.file[0],
         signal: controller.signal,
@@ -96,6 +109,7 @@ export default function Upload() {
         name: values.file[0].name,
         orgId,
         fileId: storageId,
+        type: allowedTypes[fileType],
       });
 
       form.reset();
@@ -149,12 +163,7 @@ export default function Upload() {
         form.reset();
       }}
     >
-      <DialogTrigger asChild>
-        <Button variant={"default"} className="flex items-center">
-          <CloudUploadIcon />
-          <span>Upload File</span>
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger asChild>{props.triggerComponent}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="mb-8">Select file to upload</DialogTitle>

@@ -16,8 +16,15 @@ import { FileActionsDialog } from "./file-actions-dialog";
 import { Button } from "../ui/button";
 import { useState } from "react";
 import { Doc } from "../../../convex/_generated/dataModel";
+import { cn } from "@/lib/utils";
 
-export const FileCardActions = ({ file }: { file: Doc<"files"> }) => {
+export const FileCardActions = ({
+  file,
+  className,
+}: {
+  file: Doc<"files">;
+  className?: string;
+}) => {
   const [open, setOpen] = useState(false);
 
   const handleOpenConfirmationDialog = () => setOpen(true);
@@ -26,7 +33,12 @@ export const FileCardActions = ({ file }: { file: Doc<"files"> }) => {
     <>
       <FileActionsDialog open={open} setOpen={setOpen} file={file} />
       <DropdownMenu>
-        <DropdownMenuTrigger className="rounded-full hover:bg-secondary/70 p-2 border border-gray-700">
+        <DropdownMenuTrigger
+          className={cn(
+            "rounded-full hover:bg-secondary/70 p-2 border border-gray-700",
+            className
+          )}
+        >
           <EllipsisVerticalIcon size={18} />
         </DropdownMenuTrigger>
         <DropdownMenuContent>

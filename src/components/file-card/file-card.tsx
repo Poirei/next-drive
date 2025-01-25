@@ -5,24 +5,64 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import Image from "next/image";
 import { Doc } from "../../../convex/_generated/dataModel";
-import { Button } from "@/components/ui/button";
+import type { FileType } from "../../../convex/files";
 import { FileCardActions } from "./file-card-actions";
+import { withGradient } from "@/components/withGradient";
+import { FileImageIcon, FileTextIcon, FileType2Icon } from "lucide-react";
 
-export const FileCard = ({ file }: { file: Doc<"files"> }) => {
+const fileTypeToIconMap = {
+  pdf: ({ className, style }) => (
+    <FileTextIcon className={className} style={style} />
+  ),
+  txt: ({ className, style }) => (
+    <FileType2Icon className={className} style={style} />
+  ),
+  image: ({ className, style }) => (
+    <FileImageIcon className={className} style={style} />
+  ),
+} as Record<
+  Doc<"files">["type"],
+  ({
+    className,
+    style,
+  }: {
+    className?: string;
+    style?: React.CSSProperties;
+  }) => React.ReactNode
+>;
+
+export const FileCard = ({ file }: { file: FileType }) => {
+  const TitleIcon = withGradient(fileTypeToIconMap[file.type], "stroke-1 mt-1");
+  const ImageIcon = withGradient(
+    fileTypeToIconMap[file.type],
+    "w-32 h-32 stroke-[.55]"
+  );
+
   return (
-    <Card className="border-red-900">
-      <CardHeader className="flex flex-row items-center justify-between pt-1">
-        <CardTitle>{file.name}</CardTitle>
-        <FileCardActions file={file} />
-        {/* <CardDescription>Card Description</CardDescription> */}
+    <Card className="border-red-900 relative">
+      <CardHeader className="flex flex-row items-center justify-between pt-4 border-b border-gray-700 h-12">
+        <CardTitle className="flex items-end gap-x-2 font-medium text-sm">
+          {TitleIcon}
+          <span>{file.name}</span>
+        </CardTitle>
+        <FileCardActions file={file} className="absolute top-0 right-2" />
       </CardHeader>
-      <CardContent>
-        <p>Card Content</p>
+      <CardContent className="flex justify-center items-center rounded-md h-[200px] w-[200px] mx-auto my-0">
+        {file.type === "image" ? (
+          <Image
+            src={file.url!}
+            alt={file.name}
+            width={200}
+            height={200} 
+            className="object-cover w-[200px] h-[200px] self-start"
+          />
+        ) : (
+          ImageIcon
+        )}
       </CardContent>
-      <CardFooter>
-        <Button>Download</Button>
-      </CardFooter>
+      <CardFooter></CardFooter>
     </Card>
   );
 };

@@ -1,6 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, MutationCtx, query, QueryCtx } from "./_generated/server";
 import { getUser } from "./users";
+import { fileTypes } from "./schema";
 
 const hasAccessToOrg = async (
   ctx: QueryCtx | MutationCtx,
@@ -17,6 +18,7 @@ export const createFile = mutation({
     name: v.string(),
     orgId: v.string(),
     fileId: v.id("_storage"),
+    type: fileTypes,
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -41,6 +43,7 @@ export const createFile = mutation({
       name: args.name,
       orgId: args.orgId,
       fileId: args.fileId,
+      type: args.type,
     });
   },
 });
@@ -66,12 +69,21 @@ export const getFiles = query({
       throw new ConvexError("You are not authorized to view this organization");
     }
 
-    return await ctx.db
+    const files = await ctx.db
       .query("files")
       .withIndex("by_org_id", (query) => query.eq("orgId", args.orgId))
       .collect();
+
+    return Promise.all(
+      files.map(async (file) => ({
+        ...file,
+        url: file.type === "image" ? await ctx.storage.getUrl(file.fileId) : "",
+      }))
+    );
   },
 });
+
+export type FileType = Awaited<ReturnType<typeof getFiles>>[number];
 
 export const generateUploadUrl = mutation(async (ctx) => {
   const identity = await ctx.auth.getUserIdentity();
