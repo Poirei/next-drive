@@ -6,32 +6,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import Image from "next/image";
-import { Doc } from "../../../convex/_generated/dataModel";
 import type { FileType } from "../../../convex/files";
 import { FileCardActions } from "./file-card-actions";
 import { withGradient } from "@/components/withGradient";
-import { FileImageIcon, FileTextIcon, FileType2Icon } from "lucide-react";
-
-const fileTypeToIconMap = {
-  pdf: ({ className, style }) => (
-    <FileTextIcon className={className} style={style} />
-  ),
-  txt: ({ className, style }) => (
-    <FileType2Icon className={className} style={style} />
-  ),
-  image: ({ className, style }) => (
-    <FileImageIcon className={className} style={style} />
-  ),
-} as Record<
-  Doc<"files">["type"],
-  ({
-    className,
-    style,
-  }: {
-    className?: string;
-    style?: React.CSSProperties;
-  }) => React.ReactNode
->;
+import { fileTypeToIconMap } from "@/lib/constants";
 
 export const FileCard = ({ file }: { file: FileType }) => {
   const TitleIcon = withGradient(fileTypeToIconMap[file.type], "stroke-1 mt-1");
@@ -55,7 +33,7 @@ export const FileCard = ({ file }: { file: FileType }) => {
             src={file.url!}
             alt={file.name}
             width={200}
-            height={200} 
+            height={200}
             className="object-cover w-[200px] h-[200px] self-start"
           />
         ) : (
