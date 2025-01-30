@@ -6,10 +6,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import Image from "next/image";
-import type { FileType } from "../../../convex/files";
 import { FileCardActions } from "./file-card-actions";
 import { withGradient } from "@/components/withGradient";
 import { fileTypeToIconMap } from "@/lib/constants";
+import { FileType } from "@/convex/types";
 
 export const FileCard = ({ file }: { file: FileType }) => {
   const TitleIcon = withGradient(fileTypeToIconMap[file.type], "stroke-1 mt-1");
@@ -40,7 +40,9 @@ export const FileCard = ({ file }: { file: FileType }) => {
           ImageIcon
         )}
       </CardContent>
-      <CardFooter></CardFooter>
+      <CardFooter className="text-xs font-light text-gray-300 flex items-center">
+        Uploaded: Jan 26, 2025
+      </CardFooter>
     </Card>
   );
 };

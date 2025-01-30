@@ -83,8 +83,6 @@ export const getFiles = query({
   },
 });
 
-export type FileType = Awaited<ReturnType<typeof getFiles>>[number];
-
 export const generateUploadUrl = mutation(async (ctx) => {
   const identity = await ctx.auth.getUserIdentity();
 
@@ -123,5 +121,51 @@ export const deleteFile = mutation({
     }
 
     await ctx.db.delete(args.fileId);
+  },
+});
+
+export const getSearchedFiles = query({
+  args: {
+    orgId: v.string(),
+    query: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new ConvexError("You must be logged in to search for a file");
+    }
+
+    const hasAccess = await hasAccessToOrg(
+      ctx,
+      args.orgId,
+      identity.tokenIdentifier
+    );
+
+    if (!hasAccess) {
+      throw new ConvexError(
+        "You don't have access to files in this organization"
+      );
+    }
+
+    let files = [];
+
+    if (args.query.length === 0) {
+      files = await ctx.db.query("files").collect();
+    } else {
+      files = await ctx.db
+        .query("files")
+        .withSearchIndex("search_file_name", (q) =>
+          q.search("name", args.query)
+        )
+        .collect();
+    }
+
+    return Promise.all(
+      files.map(async (file) => ({
+        ...file,
+        url: file.type === "image" ? await ctx.storage.getUrl(file.fileId) : "",
+      }))
+    );
   },
 });

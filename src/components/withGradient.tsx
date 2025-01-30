@@ -5,8 +5,7 @@ export const withGradient = (
   }>,
   className?: string
 ) => {
-  // Generate a unique ID for each gradient instance
-  const gradientId = `icon-gradient-${Math.random().toString(36).substr(2, 9)}`;
+  const gradientId = `icon-gradient-${Number(0.55).toString(36).slice(2, 9)}`;
 
   return (
     <>

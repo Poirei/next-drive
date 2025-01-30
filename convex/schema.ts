@@ -14,7 +14,11 @@ export default defineSchema({
     type: fileTypes,
     orgId: v.string(),
     fileId: v.id("_storage"),
-  }).index("by_org_id", ["orgId"]),
+  })
+    .index("by_org_id", ["orgId"])
+    .searchIndex("search_file_name", {
+      searchField: "name",
+    }),
 
   users: defineTable({
     tokenIdentifier: v.string(),

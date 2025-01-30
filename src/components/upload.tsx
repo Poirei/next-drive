@@ -164,82 +164,87 @@ export default function Upload(props: { triggerComponent: React.ReactNode }) {
       }}
     >
       <DialogTrigger asChild>{props.triggerComponent}</DialogTrigger>
-      <DialogContent>
+      <DialogContent className="backdrop-blur-3xl bg-transparent">
         <DialogHeader>
-          <DialogTitle className="mb-8">Select file to upload</DialogTitle>
+          <DialogTitle className="font-medium text-green-300/70">
+            Upload a file
+          </DialogTitle>
           <DialogDescription asChild>
-            <div>
-              <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(onSubmit)}
-                  className="space-y-8 flex flex-col"
-                >
-                  <FormField
-                    control={form.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Title</FormLabel>
-                        <FormControl>
-                          <Input placeholder="File title" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-8 flex flex-col py-4"
+              >
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input
+                          placeholder="File title"
+                          {...field}
+                          className="rounded-full focus-visible:ring-slate-600 transition-all duration-200 ease-linear"
+                        />
+                      </FormControl>
+                      <FormMessage className="text-red-300 font-medium" />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="file"
+                  render={() => (
+                    <FormItem>
+                      <FormLabel className="font-light text-sm italic text-muted-foreground">
+                        Select a file
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="file"
+                          {...fileRef}
+                          className="cursor-pointer rounded-full border-[2px] border-dashed hover:border-teal-700/60 transition-colors duration-200 ease-in-out"
+                        />
+                      </FormControl>
+                      <FormMessage className="text-red-300 font-medium" />
+                    </FormItem>
+                  )}
+                />
+                <div className="flex flex-col gap-3">
+                  <Button
+                    type="submit"
+                    variant={"default"}
+                    className={cn(
+                      "bg-green-500 hover:bg-green-500/85 transition-all duration-200 ease-linear flex gap-x-3 rounded-full",
+                      {
+                        "bg-green-500/45 hover:bg-green-500/45 cursor-not-allowed text-muted-foreground":
+                          form.formState.isSubmitting,
+                      }
                     )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="file"
-                    render={() => (
-                      <FormItem>
-                        <FormLabel>File</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="file"
-                            {...fileRef}
-                            className="cursor-pointer"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+                  >
+                    {form.formState.isSubmitting ? (
+                      <LoaderIcon className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <CloudUploadIcon />
                     )}
-                  />
-                  <div className="flex flex-col gap-2">
+                    <span>{`Upload${form.formState.isSubmitting ? "ing..." : ""}`}</span>
+                  </Button>
+                  <DialogClose asChild>
                     <Button
-                      type="submit"
-                      variant={"default"}
-                      className={cn(
-                        "bg-green-500 hover:bg-green-500/85 transition-all duration-200 ease-linear flex gap-x-3",
-                        {
-                          "bg-green-500/45 hover:bg-green-500/45 cursor-not-allowed text-muted-foreground":
-                            form.formState.isSubmitting,
-                        }
-                      )}
+                      type="button"
+                      variant={"secondary"}
+                      className="hover:bg-red-500/20 hover:text-red-400 transition-all duration-200 ease-linear flex gap-x-3 rounded-full"
+                      onClick={() => {
+                        abortControllerRef.current?.abort();
+                      }}
                     >
-                      {form.formState.isSubmitting ? (
-                        <LoaderIcon className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <CloudUploadIcon />
-                      )}
-                      <span>{`Upload${form.formState.isSubmitting ? "ing..." : ""}`}</span>
+                      <CircleXIcon />
+                      <span>Cancel</span>
                     </Button>
-                    <DialogClose asChild>
-                      <Button
-                        type="button"
-                        variant={"secondary"}
-                        className="hover:bg-red-500/20 hover:text-red-400 transition-all duration-200 ease-linear flex gap-x-3"
-                        onClick={() => {
-                          abortControllerRef.current?.abort();
-                        }}
-                      >
-                        <CircleXIcon />
-                        <span>Cancel</span>
-                      </Button>
-                    </DialogClose>
-                  </div>
-                </form>
-              </Form>
-            </div>
+                  </DialogClose>
+                </div>
+              </form>
+            </Form>
           </DialogDescription>
         </DialogHeader>
       </DialogContent>

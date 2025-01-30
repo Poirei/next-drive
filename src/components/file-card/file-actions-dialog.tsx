@@ -10,8 +10,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useMutation } from "convex/react";
 import { Trash2Icon, TriangleAlertIcon } from "lucide-react";
-import { api } from "../../../convex/_generated/api";
-import type { Doc } from "../../../convex/_generated/dataModel";
+import { api } from "@/convex/_generated/api";
+import type { Doc } from "@/convex/_generated/dataModel";
 import { useToast } from "@/hooks/use-toast";
 
 export const FileActionsDialog = ({
