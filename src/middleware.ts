@@ -1,6 +1,13 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
-export default clerkMiddleware();
+const isDashboardRoute = createRouteMatcher(["/dashboard"]);
+
+export default clerkMiddleware((_auth, req) => {
+  if (isDashboardRoute(req)) {
+    return NextResponse.redirect(new URL("/dashboard/files", req.url));
+  }
+});
 
 export const config = {
   matcher: [

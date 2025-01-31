@@ -22,7 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${dmSans.className} antialiased`}>
+      <body className={`${dmSans.className} antialiased h-screen`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

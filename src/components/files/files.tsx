@@ -24,9 +24,6 @@ export function Files({
     setFiles(() => initialFiles);
   }, [initialFiles]);
 
-  console.log("Initial files: ", initialFiles);
-  console.log("Files: ", files);
-
   return (
     <>
       {initialFiles && initialFiles?.length > 0 && (
