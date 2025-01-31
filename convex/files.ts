@@ -2,6 +2,8 @@ import { ConvexError, v } from "convex/values";
 import { mutation, MutationCtx, query, QueryCtx } from "./_generated/server";
 import { getUser } from "./users";
 import { fileTypes } from "./schema";
+import { Id } from "./_generated/dataModel";
+import { FileWithUrl } from "./types";
 
 const hasAccessToOrg = async (
   ctx: QueryCtx | MutationCtx,
@@ -51,8 +53,9 @@ export const createFile = mutation({
 export const getFiles = query({
   args: {
     orgId: v.string(),
+    onlyFetchFavorites: v.optional(v.boolean()),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<FileWithUrl[]> => {
     const identity = await ctx.auth.getUserIdentity();
 
     if (!identity) {
@@ -69,15 +72,48 @@ export const getFiles = query({
       throw new ConvexError("You are not authorized to view this organization");
     }
 
-    const files = await ctx.db
-      .query("files")
-      .withIndex("by_org_id", (query) => query.eq("orgId", args.orgId))
-      .collect();
+    let files: {
+      _id: Id<"files">;
+      _creationTime: number;
+      name: string;
+      type: "image" | "csv" | "pdf" | "txt";
+      orgId: string;
+      fileId: Id<"_storage">;
+    }[] = [];
+
+    if (args.onlyFetchFavorites) {
+      const user = await getUser(ctx, identity.tokenIdentifier);
+
+      const favorites = await ctx.db
+        .query("favorites")
+        .withIndex("by_user_id_and_org_id_and_file_id", (query) =>
+          query.eq("userId", user._id).eq("orgId", args.orgId)
+        )
+        .collect();
+
+      if (!favorites.length) {
+        throw new ConvexError("You don't have any favorites");
+      }
+
+      files = (
+        await Promise.all(
+          favorites.map(async (favorite) => {
+            const file = await ctx.db.get(favorite.fileId);
+            return file;
+          })
+        )
+      ).filter((file): file is NonNullable<typeof file> => file !== null);
+    } else {
+      files = await ctx.db
+        .query("files")
+        .withIndex("by_org_id", (query) => query.eq("orgId", args.orgId))
+        .collect();
+    }
 
     return Promise.all(
       files.map(async (file) => ({
         ...file,
-        url: file.type === "image" ? await ctx.storage.getUrl(file.fileId) : "",
+        url: await ctx.storage.getUrl(file.fileId),
       }))
     );
   },
@@ -167,5 +203,67 @@ export const getSearchedFiles = query({
         url: file.type === "image" ? await ctx.storage.getUrl(file.fileId) : "",
       }))
     );
+  },
+});
+
+export const toggleFavorite = mutation({
+  args: {
+    fileId: v.id("files"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new ConvexError("You must be log in first");
+    }
+
+    const file = await ctx.db.get(args.fileId);
+
+    if (!file) {
+      throw new ConvexError("File doesn't exist");
+    }
+
+    const hasAccess = await hasAccessToOrg(
+      ctx,
+      file.orgId,
+      identity.tokenIdentifier
+    );
+
+    if (!hasAccess) {
+      throw new ConvexError(
+        "You don't have access to files in this organization"
+      );
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token_identifier", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier)
+      )
+      .unique();
+
+    if (!user) {
+      throw new ConvexError("User doesn't exist");
+    }
+
+    const favorite = await ctx.db
+      .query("favorites")
+      .withIndex("by_user_id_and_org_id_and_file_id", (q) =>
+        q
+          .eq("userId", user._id)
+          .eq("orgId", file.orgId)
+          .eq("fileId", args.fileId)
+      )
+      .unique();
+
+    if (!favorite) {
+      await ctx.db.insert("favorites", {
+        userId: user._id,
+        orgId: file.orgId,
+        fileId: file._id,
+      });
+    } else {
+      await ctx.db.delete(favorite._id);
+    }
   },
 });

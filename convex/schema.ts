@@ -24,4 +24,10 @@ export default defineSchema({
     tokenIdentifier: v.string(),
     orgIds: v.array(v.string()),
   }).index("by_token_identifier", ["tokenIdentifier"]),
+
+  favorites: defineTable({
+    fileId: v.id("files"),
+    userId: v.id("users"),
+    orgId: v.string(),
+  }).index("by_user_id_and_org_id_and_file_id", ["userId", "orgId", "fileId"]),
 });

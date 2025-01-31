@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Form,
   FormControl,
@@ -11,11 +13,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { FileType } from "@/convex/types";
 import { useConvex } from "convex/react";
 import { useOrganization } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
 import { SearchIcon } from "lucide-react";
+import { FileWithUrl } from "@/convex/types";
 
 const formSchema = z.object({
   query: z.string().max(255, "Title is too long"),
@@ -24,7 +26,7 @@ const formSchema = z.object({
 export const SearchBar = ({
   setFiles,
 }: {
-  setFiles: Dispatch<SetStateAction<FileType[]>>;
+  setFiles: Dispatch<SetStateAction<FileWithUrl[]>>;
 }) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

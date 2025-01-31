@@ -7,18 +7,18 @@ import { FileCard } from "../file-card/file-card";
 import Image from "next/image";
 import clsx from "clsx";
 import Upload from "../upload";
-import { Button } from "../ui/button";
-import { CloudUploadIcon } from "lucide-react";
-import { SearchBar } from "../search-bar";
-import { FileType } from "@/convex/types";
+import { FileBrowserHeader } from "../file-browser/file-browser-header";
+import { FileWithUrl } from "@/convex/types";
 
 export function Files({
+  headerTitle,
   preloadedFiles,
 }: {
+  headerTitle: string;
   preloadedFiles: Preloaded<typeof api.files.getFiles>;
 }) {
   const initialFiles = usePreloadedQuery(preloadedFiles);
-  const [files, setFiles] = useState<FileType[]>(initialFiles);
+  const [files, setFiles] = useState<FileWithUrl[]>(initialFiles);
 
   useEffect(() => {
     setFiles(() => initialFiles);
@@ -27,23 +27,7 @@ export function Files({
   return (
     <>
       {initialFiles && initialFiles?.length > 0 && (
-        <div className="flex justify-between items-center">
-          <h1 className="text-4xl font-bold">Your Files</h1>
-          <div className="flex gap-7">
-            <SearchBar setFiles={setFiles} />
-            <Upload
-              triggerComponent={
-                <Button
-                  variant={"default"}
-                  className="flex items-center rounded-full"
-                >
-                  <CloudUploadIcon />
-                  <span>Upload File</span>
-                </Button>
-              }
-            />
-          </div>
-        </div>
+        <FileBrowserHeader setFiles={setFiles} title={headerTitle} />
       )}
       <div
         className={clsx(

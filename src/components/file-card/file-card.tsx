@@ -9,9 +9,9 @@ import Image from "next/image";
 import { FileCardActions } from "./file-card-actions";
 import { withGradient } from "@/components/withGradient";
 import { fileTypeToIconMap } from "@/lib/constants";
-import { FileType } from "@/convex/types";
+import { FileWithUrl } from "@/convex/types";
 
-export const FileCard = ({ file }: { file: FileType }) => {
+export const FileCard = ({ file }: { file: FileWithUrl }) => {
   const TitleIcon = withGradient(fileTypeToIconMap[file.type], "stroke-1 mt-1");
   const ImageIcon = withGradient(
     fileTypeToIconMap[file.type],
@@ -30,7 +30,7 @@ export const FileCard = ({ file }: { file: FileType }) => {
       <CardContent className="flex justify-center items-center rounded-md h-[200px] w-[200px] mx-auto my-0">
         {file.type === "image" ? (
           <Image
-            src={file.url!}
+            src={file.url ?? ""}
             alt={file.name}
             width={200}
             height={200}

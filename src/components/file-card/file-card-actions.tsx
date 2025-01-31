@@ -10,6 +10,7 @@ import {
 import {
   EllipsisVerticalIcon,
   HardDriveDownloadIcon,
+  HeartIcon,
   Trash2Icon,
 } from "lucide-react";
 import { FileActionsDialog } from "./file-actions-dialog";
@@ -17,6 +18,8 @@ import { Button } from "../ui/button";
 import { useState } from "react";
 import { Doc } from "../../../convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
+import { api } from "@/convex/_generated/api";
+import { useMutation } from "convex/react";
 
 export const FileCardActions = ({
   file,
@@ -26,6 +29,7 @@ export const FileCardActions = ({
   className?: string;
 }) => {
   const [open, setOpen] = useState(false);
+  const toggleFavorite = useMutation(api.files.toggleFavorite);
 
   const handleOpenConfirmationDialog = () => setOpen(true);
 
@@ -56,7 +60,25 @@ export const FileCardActions = ({
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            className="focus:bg-destructive/50 hover:bg-destructive/50 focus:text-red-400 hover:text-red-400 text-red-500 transition-all duration-200 ease-linear cursor-pointer"
+            className="bg-fuchsia-700/40 focus:bg-fuchsia-700/50 hover:bg-fuchsia-700/50 focus:text-fuchsia-400 hover:text-fuchsia-400 text-fuchsia-500 transition-all duration-150 ease-linear cursor-pointer"
+            asChild
+          >
+            <Button
+              className="bg-transparent w-full focus-visible:ring-0 flex justify-start"
+              variant={"ghost"}
+              onClick={async () => {
+                await toggleFavorite({
+                  fileId: file._id,
+                });
+              }}
+            >
+              <HeartIcon />
+              Favorite
+            </Button>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            className="focus:bg-destructive/50 hover:bg-destructive/50 focus:text-red-400 hover:text-red-400 text-rose-500 transition-all duration-200 ease-linear cursor-pointer"
             asChild
           >
             <Button
