@@ -1,4 +1,4 @@
-import { Files } from "@/components/files/files";
+import { Files } from "@/components/files";
 import { api } from "@/convex/_generated/api";
 import { auth } from "@clerk/nextjs/server";
 import { preloadQuery } from "convex/nextjs";
@@ -17,8 +17,14 @@ export default async function Page() {
         (await getToken({
           template: "convex",
         })) || undefined,
-    }
+    },
   );
 
-  return <Files headerTitle="Favorites" preloadedFiles={preloadedFiles} favoritesOnly />;
+  return (
+    <Files
+      headerTitle="Favorites"
+      preloadedFiles={preloadedFiles}
+      favoritesOnly
+    />
+  );
 }

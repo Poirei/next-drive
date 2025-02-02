@@ -7,6 +7,7 @@ export type FileWithUrl = {
   type: "image" | "csv" | "pdf" | "txt";
   orgId: string;
   fileId: Id<"_storage">;
+  shouldDelete: boolean;
   url: string | null;
   isFavorited: boolean;
 };

@@ -16,8 +16,11 @@ export default defineSchema({
     type: fileTypes,
     orgId: v.string(),
     fileId: v.id("_storage"),
+    shouldDelete: v.boolean(),
   })
     .index("by_org_id", ["orgId"])
+    .index("by_should_delete", ["shouldDelete"])
+    .index("by_org_id_and_should_delete", ["orgId", "shouldDelete"])
     .searchIndex("search_file_name", {
       searchField: "name",
     }),

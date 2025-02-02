@@ -37,16 +37,15 @@ export const FileActionsDialog = ({
         description: (
           <p className="flex items-center gap-2 font-medium text-red-200">
             <Trash2Icon />
-            <span>Your file has been deleted</span>
+            <span>Your file has been moved to trash</span>
           </p>
         ),
-        variant: "destructive",
+        variant: "default",
         duration: 2500,
       });
     } catch (error: unknown) {
       if (error instanceof ConvexError) {
         toast({
-          title: "An error has occurred",
           description: (
             <p className="flex items-center gap-2 font-medium">
               <TriangleAlertIcon />

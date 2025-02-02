@@ -26,11 +26,12 @@ const formSchema = z.object({
 export const SearchBar = ({
   setFiles,
   favoritesOnly,
+  deletedOnly,
 }: {
   setFiles: Dispatch<SetStateAction<FileWithUrl[]>>;
-  favoritesOnly: boolean;
+  favoritesOnly?: boolean;
+  deletedOnly?: boolean;
 }) => {
-  console.log("favs only: ", favoritesOnly);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -52,14 +53,15 @@ export const SearchBar = ({
       const searchedFiles = await convex.query(api.files.getSearchedFiles, {
         orgId: orgId,
         query: query as string,
-        favoritesOnly: favoritesOnly,
+        favoritesOnly: favoritesOnly ?? false,
+        deletedOnly: deletedOnly ?? false,
       });
 
       setFiles(searchedFiles);
     });
 
     return () => unsubscribe();
-  }, [form, convex, orgId, setFiles, favoritesOnly]);
+  }, [form, convex, orgId, setFiles, favoritesOnly, deletedOnly]);
 
   return (
     <div>

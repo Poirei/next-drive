@@ -1,5 +1,11 @@
 import { ConvexError, v } from "convex/values";
-import { mutation, MutationCtx, query, QueryCtx } from "./_generated/server";
+import {
+  internalMutation,
+  mutation,
+  MutationCtx,
+  query,
+  QueryCtx,
+} from "./_generated/server";
 import { getUser } from "./users";
 import { fileTypes } from "./schema";
 import { Id } from "./_generated/dataModel";
@@ -49,6 +55,7 @@ export const createFile = mutation({
       orgId: args.orgId,
       fileId: args.fileId,
       type: args.type,
+      shouldDelete: false,
     });
   },
 });
@@ -57,6 +64,7 @@ export const getFiles = query({
   args: {
     orgId: v.string(),
     onlyFetchFavorites: v.optional(v.boolean()),
+    onlyFetchToBeDeleted: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<FileWithUrl[]> => {
     const identity = await ctx.auth.getUserIdentity();
@@ -82,6 +90,7 @@ export const getFiles = query({
       type: "image" | "csv" | "pdf" | "txt";
       orgId: string;
       fileId: Id<"_storage">;
+      shouldDelete: boolean;
     }[] = [];
 
     const user = await getUser(ctx, identity.tokenIdentifier);
@@ -93,24 +102,38 @@ export const getFiles = query({
       )
       .collect();
 
-    if (args.onlyFetchFavorites) {
-      if (!favorites.length) {
-        return [];
-      }
+    switch (true) {
+      case args.onlyFetchToBeDeleted:
+        files = await ctx.db
+          .query("files")
+          .withIndex("by_org_id_and_should_delete", (q) =>
+            q.eq("orgId", args.orgId).eq("shouldDelete", true),
+          )
+          .collect();
+        break;
 
-      files = (
-        await Promise.all(
-          favorites.map(async (favorite) => {
-            const file = await ctx.db.get(favorite.fileId);
-            return file;
-          }),
-        )
-      ).filter((file): file is NonNullable<typeof file> => file !== null);
-    } else {
-      files = await ctx.db
-        .query("files")
-        .withIndex("by_org_id", (query) => query.eq("orgId", args.orgId))
-        .collect();
+      case args.onlyFetchFavorites:
+        if (!favorites.length) {
+          return [];
+        }
+
+        files = (
+          await Promise.all(
+            favorites.map(async (favorite) => {
+              const file = await ctx.db.get(favorite.fileId);
+              return file;
+            }),
+          )
+        ).filter((file): file is NonNullable<typeof file> => file !== null);
+        break;
+
+      default:
+        files = await ctx.db
+          .query("files")
+          .withIndex("by_org_id_and_should_delete", (query) =>
+            query.eq("orgId", args.orgId).eq("shouldDelete", false),
+          )
+          .collect();
     }
 
     return Promise.all(
@@ -169,7 +192,66 @@ export const deleteFile = mutation({
       throw new ConvexError("You are not authorized to delete this file");
     }
 
-    await ctx.db.delete(args.fileId);
+    await ctx.db.patch(args.fileId, {
+      shouldDelete: true,
+    });
+  },
+});
+
+export const deleteFilesMarkedForDeletion = internalMutation({
+  handler: async (ctx) => {
+    const files = await ctx.db
+      .query("files")
+      .withIndex("by_should_delete", (q) => q.eq("shouldDelete", true))
+      .collect();
+
+    files.forEach(async (file) => {
+      await ctx.storage.delete(file.fileId);
+
+      await ctx.db.delete(file._id);
+    });
+  },
+});
+
+export const restoreFile = mutation({
+  args: {
+    fileId: v.id("files"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new ConvexError("You must be logged in to restore files");
+    }
+
+    const file = await ctx.db.get(args.fileId);
+
+    if (!file) {
+      throw new ConvexError("File doesn't exist");
+    }
+
+    const hasAccess = await hasAccessToOrg(
+      ctx,
+      file.orgId,
+      identity.tokenIdentifier,
+    );
+
+    if (!hasAccess) {
+      throw new ConvexError("You are not authorized to restore this file");
+    }
+
+    const user = await getUser(ctx, identity.tokenIdentifier);
+    const isAdmin = user.orgIds.some(
+      (org) => org.orgId === file.orgId && org.role === "admin",
+    );
+
+    if (!isAdmin) {
+      throw new ConvexError("You are not authorized to restore this file");
+    }
+
+    await ctx.db.patch(args.fileId, {
+      shouldDelete: false,
+    });
   },
 });
 
@@ -178,6 +260,7 @@ export const getSearchedFiles = query({
     orgId: v.string(),
     query: v.string(),
     favoritesOnly: v.boolean(),
+    deletedOnly: v.boolean(),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -205,6 +288,7 @@ export const getSearchedFiles = query({
       type: "image" | "csv" | "pdf" | "txt";
       orgId: string;
       fileId: Id<"_storage">;
+      shouldDelete: boolean;
     }[] = [];
 
     const user = await getUser(ctx, identity.tokenIdentifier);
@@ -222,6 +306,10 @@ export const getSearchedFiles = query({
           .query("files")
           .withIndex("by_org_id", (q) => q.eq("orgId", args.orgId))
           .collect();
+
+        if (args.deletedOnly) {
+          files = files.filter((file) => file.shouldDelete);
+        }
       } else {
         files = await Promise.all(
           favFiles.map(async (favorite) => {
@@ -242,6 +330,10 @@ export const getSearchedFiles = query({
         const favoriteFileIds = new Set(favFiles.map((file) => file.fileId));
 
         files = files.filter((file) => favoriteFileIds.has(file._id));
+      }
+
+      if (args.deletedOnly) {
+        files = files.filter((file) => file.shouldDelete);
       }
     }
 

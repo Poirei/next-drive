@@ -76,7 +76,6 @@ export default function Upload(props: { triggerComponent: React.ReactNode }) {
   }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
@@ -88,8 +87,6 @@ export default function Upload(props: { triggerComponent: React.ReactNode }) {
       "image/png": "image",
       "image/jpeg": "image",
     } as Record<string, Doc<"files">["type"]>;
-
-    console.log(allowedTypes);
 
     try {
       const uploadUrl = await generateUploadUrl();
@@ -164,7 +161,7 @@ export default function Upload(props: { triggerComponent: React.ReactNode }) {
       }}
     >
       <DialogTrigger asChild>{props.triggerComponent}</DialogTrigger>
-      <DialogContent className="backdrop-blur-3xl bg-transparent">
+      <DialogContent className="bg-transparent backdrop-blur-3xl">
         <DialogHeader>
           <DialogTitle className="font-medium text-green-300/70">
             Upload a file
@@ -173,7 +170,7 @@ export default function Upload(props: { triggerComponent: React.ReactNode }) {
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-8 flex flex-col py-4"
+                className="flex flex-col space-y-8 py-4"
               >
                 <FormField
                   control={form.control}
@@ -184,10 +181,10 @@ export default function Upload(props: { triggerComponent: React.ReactNode }) {
                         <Input
                           placeholder="File title"
                           {...field}
-                          className="rounded-full focus-visible:ring-slate-600 transition-all duration-200 ease-linear"
+                          className="rounded-full transition-all duration-200 ease-linear focus-visible:ring-slate-600"
                         />
                       </FormControl>
-                      <FormMessage className="text-red-300 font-medium" />
+                      <FormMessage className="font-medium text-red-300" />
                     </FormItem>
                   )}
                 />
@@ -196,17 +193,17 @@ export default function Upload(props: { triggerComponent: React.ReactNode }) {
                   name="file"
                   render={() => (
                     <FormItem>
-                      <FormLabel className="font-light text-sm italic text-muted-foreground">
+                      <FormLabel className="text-sm font-light italic text-muted-foreground">
                         Select a file
                       </FormLabel>
                       <FormControl>
                         <Input
                           type="file"
                           {...fileRef}
-                          className="cursor-pointer rounded-full border-[2px] border-dashed hover:border-teal-700/60 transition-colors duration-200 ease-in-out"
+                          className="cursor-pointer rounded-full border-[2px] border-dashed transition-colors duration-200 ease-in-out hover:border-teal-700/60"
                         />
                       </FormControl>
-                      <FormMessage className="text-red-300 font-medium" />
+                      <FormMessage className="font-medium text-red-300" />
                     </FormItem>
                   )}
                 />
@@ -215,11 +212,11 @@ export default function Upload(props: { triggerComponent: React.ReactNode }) {
                     type="submit"
                     variant={"default"}
                     className={cn(
-                      "bg-green-500 hover:bg-green-500/85 transition-all duration-200 ease-linear flex gap-x-3 rounded-full",
+                      "flex gap-x-3 rounded-full bg-green-500 transition-all duration-200 ease-linear hover:bg-green-500/85",
                       {
-                        "bg-green-500/45 hover:bg-green-500/45 cursor-not-allowed text-muted-foreground":
+                        "cursor-not-allowed bg-green-500/45 text-muted-foreground hover:bg-green-500/45":
                           form.formState.isSubmitting,
-                      }
+                      },
                     )}
                   >
                     {form.formState.isSubmitting ? (
@@ -233,7 +230,7 @@ export default function Upload(props: { triggerComponent: React.ReactNode }) {
                     <Button
                       type="button"
                       variant={"secondary"}
-                      className="hover:bg-red-500/20 hover:text-red-400 transition-all duration-200 ease-linear flex gap-x-3 rounded-full"
+                      className="flex gap-x-3 rounded-full transition-all duration-200 ease-linear hover:bg-red-500/20 hover:text-red-400"
                       onClick={() => {
                         abortControllerRef.current?.abort();
                       }}

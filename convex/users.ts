@@ -91,8 +91,9 @@ export const removeOrgIdFromUser = internalMutation({
         );
       }
 
-      const orgs = user.orgIds;
-      orgs.splice(orgIndex, 1);
+      const orgs = user.orgIds.filter(
+        (org) => !(org.orgId === args.orgId && org.role === args.role),
+      );
 
       await ctx.db.patch(user._id, {
         orgIds: orgs,

@@ -10,6 +10,7 @@ export default async function Page() {
     api.files.getFiles,
     {
       orgId: organizationId ?? userId ?? "",
+      onlyFetchToBeDeleted: true,
     },
     {
       token:
@@ -20,10 +21,6 @@ export default async function Page() {
   );
 
   return (
-    <Files
-      headerTitle="Your Files"
-      preloadedFiles={preloadedFiles}
-      favoritesOnly={false}
-    />
+    <Files headerTitle="Trash" preloadedFiles={preloadedFiles} deletedOnly />
   );
 }

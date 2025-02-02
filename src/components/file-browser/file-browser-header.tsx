@@ -8,13 +8,18 @@ import { FileWithUrl } from "@/convex/types";
 export const FileBrowserHeader: React.FC<{
   title: string;
   setFiles: Dispatch<React.SetStateAction<FileWithUrl[]>>;
-  favoritesOnly: boolean;
-}> = ({ title, setFiles, favoritesOnly }) => {
+  favoritesOnly?: boolean;
+  deletedOnly?: boolean;
+}> = ({ title, setFiles, favoritesOnly, deletedOnly }) => {
   return (
     <div className="flex items-center justify-between">
       <h1 className="text-4xl font-bold">{title}</h1>
       <div className="flex gap-7">
-        <SearchBar setFiles={setFiles} favoritesOnly={favoritesOnly} />
+        <SearchBar
+          setFiles={setFiles}
+          favoritesOnly={favoritesOnly}
+          deletedOnly={deletedOnly}
+        />
         <Upload
           triggerComponent={
             <Button

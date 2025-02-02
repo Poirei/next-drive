@@ -12,6 +12,8 @@ import {
   HardDriveDownloadIcon,
   HeartIcon,
   Trash2Icon,
+  UndoDotIcon,
+  UndoIcon,
 } from "lucide-react";
 import { FileActionsDialog } from "./file-actions-dialog";
 import { Button } from "../ui/button";
@@ -21,6 +23,7 @@ import { api } from "@/convex/_generated/api";
 import { useMutation } from "convex/react";
 import { FileWithUrl } from "@/convex/types";
 import { Protect } from "@clerk/nextjs";
+import { useToast } from "@/hooks/use-toast";
 
 export const FileCardActions = ({
   file,
@@ -29,11 +32,29 @@ export const FileCardActions = ({
   file: FileWithUrl;
   className?: string;
 }) => {
-  console.log(file);
-  const [open, setOpen] = useState(false);
   const toggleFavorite = useMutation(api.files.toggleFavorite);
+  const restoreFile = useMutation(api.files.restoreFile);
+  const [open, setOpen] = useState(false);
+  const { toast } = useToast();
 
   const handleOpenConfirmationDialog = () => setOpen(true);
+
+  const handleRestoreFile = async () => {
+    await restoreFile({
+      fileId: file._id,
+    });
+
+    toast({
+      description: (
+        <p className="flex items-center gap-2 font-medium">
+          <UndoDotIcon />
+          <span>Your file has been restored.</span>
+        </p>
+      ),
+      variant: "success",
+      duration: 2500,
+    });
+  };
 
   return (
     <>
@@ -81,16 +102,35 @@ export const FileCardActions = ({
           <Protect role="org:admin" fallback={<></>}>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              className="cursor-pointer bg-pink-700/20 text-pink-500 transition-all duration-200 ease-linear hover:bg-pink-700/50 hover:text-pink-400 focus:bg-pink-700/50 focus:text-pink-400"
+              className={cn(
+                "cursor-pointer bg-pink-700/20 text-pink-500 transition-all duration-200 ease-linear hover:bg-pink-700/50 hover:text-pink-400 focus:bg-pink-700/50 focus:text-pink-400",
+                {
+                  "bg-cyan-700/20 text-cyan-500 hover:bg-cyan-700/50 hover:text-cyan-400 focus:bg-cyan-700/50 focus:text-cyan-400":
+                    file.shouldDelete,
+                },
+              )}
               asChild
             >
               <Button
                 variant={"ghost"}
                 className="flex w-full justify-start focus-visible:ring-0"
-                onClick={handleOpenConfirmationDialog}
+                onClick={
+                  file.shouldDelete
+                    ? handleRestoreFile
+                    : handleOpenConfirmationDialog
+                }
               >
-                <Trash2Icon />
-                Delete
+                {file.shouldDelete ? (
+                  <>
+                    <UndoIcon />
+                    <span>Restore</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2Icon />
+                    <span>Delete</span>
+                  </>
+                )}
               </Button>
             </DropdownMenuItem>
           </Protect>
