@@ -8,11 +8,14 @@ import { FileWithUrl } from "./types";
 const hasAccessToOrg = async (
   ctx: QueryCtx | MutationCtx,
   orgId: string,
-  tokenIdentifier: string
+  tokenIdentifier: string,
 ) => {
   const user = await getUser(ctx, tokenIdentifier);
 
-  return user.orgIds.includes(orgId) || user.tokenIdentifier.includes(orgId);
+  return (
+    user.orgIds.some((org) => org.orgId === orgId) ||
+    user.tokenIdentifier.includes(orgId)
+  );
 };
 
 export const createFile = mutation({
@@ -32,12 +35,12 @@ export const createFile = mutation({
     const hasAccess = await hasAccessToOrg(
       ctx,
       args.orgId,
-      identity.tokenIdentifier
+      identity.tokenIdentifier,
     );
 
     if (!hasAccess) {
       throw new ConvexError(
-        "You are not authorized to upload a file to this organization"
+        "You are not authorized to upload a file to this organization",
       );
     }
 
@@ -65,7 +68,7 @@ export const getFiles = query({
     const hasAccess = await hasAccessToOrg(
       ctx,
       args.orgId,
-      identity.tokenIdentifier
+      identity.tokenIdentifier,
     );
 
     if (!hasAccess) {
@@ -81,18 +84,18 @@ export const getFiles = query({
       fileId: Id<"_storage">;
     }[] = [];
 
+    const user = await getUser(ctx, identity.tokenIdentifier);
+
+    const favorites = await ctx.db
+      .query("favorites")
+      .withIndex("by_user_id_and_org_id_and_file_id", (query) =>
+        query.eq("userId", user._id).eq("orgId", args.orgId),
+      )
+      .collect();
+
     if (args.onlyFetchFavorites) {
-      const user = await getUser(ctx, identity.tokenIdentifier);
-
-      const favorites = await ctx.db
-        .query("favorites")
-        .withIndex("by_user_id_and_org_id_and_file_id", (query) =>
-          query.eq("userId", user._id).eq("orgId", args.orgId)
-        )
-        .collect();
-
       if (!favorites.length) {
-        throw new ConvexError("You don't have any favorites");
+        return [];
       }
 
       files = (
@@ -100,7 +103,7 @@ export const getFiles = query({
           favorites.map(async (favorite) => {
             const file = await ctx.db.get(favorite.fileId);
             return file;
-          })
+          }),
         )
       ).filter((file): file is NonNullable<typeof file> => file !== null);
     } else {
@@ -114,7 +117,8 @@ export const getFiles = query({
       files.map(async (file) => ({
         ...file,
         url: await ctx.storage.getUrl(file.fileId),
-      }))
+        isFavorited: favorites.some((favorite) => favorite.fileId === file._id),
+      })),
     );
   },
 });
@@ -149,10 +153,19 @@ export const deleteFile = mutation({
     const hasAccess = await hasAccessToOrg(
       ctx,
       file.orgId,
-      identity.tokenIdentifier
+      identity.tokenIdentifier,
     );
 
     if (!hasAccess) {
+      throw new ConvexError("You are not authorized to delete this file");
+    }
+
+    const user = await getUser(ctx, identity.tokenIdentifier);
+    const isAdmin = user.orgIds.some(
+      (org) => org.orgId === file.orgId && org.role === "admin",
+    );
+
+    if (!isAdmin) {
       throw new ConvexError("You are not authorized to delete this file");
     }
 
@@ -164,6 +177,7 @@ export const getSearchedFiles = query({
   args: {
     orgId: v.string(),
     query: v.string(),
+    favoritesOnly: v.boolean(),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -175,33 +189,68 @@ export const getSearchedFiles = query({
     const hasAccess = await hasAccessToOrg(
       ctx,
       args.orgId,
-      identity.tokenIdentifier
+      identity.tokenIdentifier,
     );
 
     if (!hasAccess) {
       throw new ConvexError(
-        "You don't have access to files in this organization"
+        "You don't have access to files in this organization",
       );
     }
 
-    let files = [];
+    let files: {
+      _id: Id<"files">;
+      _creationTime: number;
+      name: string;
+      type: "image" | "csv" | "pdf" | "txt";
+      orgId: string;
+      fileId: Id<"_storage">;
+    }[] = [];
+
+    const user = await getUser(ctx, identity.tokenIdentifier);
+
+    const favFiles = await ctx.db
+      .query("favorites")
+      .withIndex("by_user_id_and_org_id_and_file_id", (q) =>
+        q.eq("userId", user._id).eq("orgId", args.orgId),
+      )
+      .collect();
 
     if (args.query.length === 0) {
-      files = await ctx.db.query("files").collect();
+      if (!args.favoritesOnly) {
+        files = await ctx.db
+          .query("files")
+          .withIndex("by_org_id", (q) => q.eq("orgId", args.orgId))
+          .collect();
+      } else {
+        files = await Promise.all(
+          favFiles.map(async (favorite) => {
+            const file = await ctx.db.get(favorite.fileId);
+            return file as NonNullable<typeof file>;
+          }),
+        );
+      }
     } else {
       files = await ctx.db
         .query("files")
         .withSearchIndex("search_file_name", (q) =>
-          q.search("name", args.query)
+          q.search("name", args.query),
         )
         .collect();
+
+      if (args.favoritesOnly) {
+        const favoriteFileIds = new Set(favFiles.map((file) => file.fileId));
+
+        files = files.filter((file) => favoriteFileIds.has(file._id));
+      }
     }
 
     return Promise.all(
       files.map(async (file) => ({
         ...file,
         url: file.type === "image" ? await ctx.storage.getUrl(file.fileId) : "",
-      }))
+        isFavorited: favFiles.some((favorite) => favorite.fileId === file._id),
+      })),
     );
   },
 });
@@ -226,19 +275,19 @@ export const toggleFavorite = mutation({
     const hasAccess = await hasAccessToOrg(
       ctx,
       file.orgId,
-      identity.tokenIdentifier
+      identity.tokenIdentifier,
     );
 
     if (!hasAccess) {
       throw new ConvexError(
-        "You don't have access to files in this organization"
+        "You don't have access to files in this organization",
       );
     }
 
     const user = await ctx.db
       .query("users")
       .withIndex("by_token_identifier", (q) =>
-        q.eq("tokenIdentifier", identity.tokenIdentifier)
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
       )
       .unique();
 
@@ -252,7 +301,7 @@ export const toggleFavorite = mutation({
         q
           .eq("userId", user._id)
           .eq("orgId", file.orgId)
-          .eq("fileId", args.fileId)
+          .eq("fileId", args.fileId),
       )
       .unique();
 

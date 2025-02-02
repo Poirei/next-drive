@@ -9,13 +9,16 @@ import clsx from "clsx";
 import Upload from "../upload";
 import { FileBrowserHeader } from "../file-browser/file-browser-header";
 import { FileWithUrl } from "@/convex/types";
+import { Separator } from "../ui/separator";
 
 export function Files({
   headerTitle,
   preloadedFiles,
+  favoritesOnly,
 }: {
   headerTitle: string;
   preloadedFiles: Preloaded<typeof api.files.getFiles>;
+  favoritesOnly: boolean;
 }) {
   const initialFiles = usePreloadedQuery(preloadedFiles);
   const [files, setFiles] = useState<FileWithUrl[]>(initialFiles);
@@ -27,11 +30,18 @@ export function Files({
   return (
     <>
       {initialFiles && initialFiles?.length > 0 && (
-        <FileBrowserHeader setFiles={setFiles} title={headerTitle} />
+        <>
+          <FileBrowserHeader
+            setFiles={setFiles}
+            title={headerTitle}
+            favoritesOnly={favoritesOnly}
+          />
+          <Separator className="mt-4 bg-slate-800" />
+        </>
       )}
       <div
         className={clsx(
-          `grid ${files && files.length ? "grid-cols-1 md:grid-cols-4" : "grid-cols-1 justify-items-center"} gap-14 px-2 md:px-0 mt-10  `
+          `grid ${files && files.length ? "grid-cols-1 md:grid-cols-4" : "grid-cols-1 justify-items-center"} mt-10 gap-14 px-2 md:px-0`,
         )}
       >
         {files?.length > 0 &&
@@ -48,13 +58,13 @@ export function Files({
               alt="Empty Folder"
               width={500}
               height={500}
-              className="filter invert sm:w-[70px] md:w-[500px] object-cover aspect-square"
+              className="aspect-square object-cover invert filter sm:w-[70px] md:w-[500px]"
             />
-            <p className="font-medium text-lg">
+            <p className="text-lg font-medium">
               It&apos;s empty in here. Go ahead and{" "}
               <Upload
                 triggerComponent={
-                  <span className="decoration-green-500 underline hover:no-underline hover:bg-green-400 hover:px-1 rounded-full hover:text-black cursor-pointer transition-[padding] duration-300 ease-in-out text-green-400">
+                  <span className="cursor-pointer rounded-full text-green-400 underline decoration-green-500 transition-[padding] duration-300 ease-in-out hover:bg-green-400 hover:px-1 hover:text-black hover:no-underline">
                     upload something
                   </span>
                 }

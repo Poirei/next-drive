@@ -16,8 +16,14 @@ export default async function Page() {
         (await getToken({
           template: "convex",
         })) || undefined,
-    }
+    },
   );
 
-  return <Files headerTitle="Your Files" preloadedFiles={preloadedFiles} />;
+  return (
+    <Files
+      headerTitle="Your Files"
+      preloadedFiles={preloadedFiles}
+      favoritesOnly={false}
+    />
+  );
 }

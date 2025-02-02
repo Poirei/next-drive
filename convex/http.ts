@@ -32,7 +32,26 @@ http.route({
           await ctx.runMutation(internal.users.addOrgIdToUser, {
             tokenIdentifier: `https://creative-starfish-84.clerk.accounts.dev|${result.data.public_user_data.user_id}`,
             orgId: result.data.organization.id,
+            role: result.data.role === "org:admin" ? "admin" : "member",
           });
+          break;
+
+        case "organizationMembership.updated":
+          await ctx.runMutation(internal.users.updateRoleInOrgForUser, {
+            tokenIdentifier: `https://creative-starfish-84.clerk.accounts.dev|${result.data.public_user_data.user_id}`,
+            orgId: result.data.organization.id,
+            role: result.data.role === "org:admin" ? "admin" : "member",
+          });
+          break;
+
+        case "organizationMembership.deleted":
+          await ctx.runMutation(internal.users.removeOrgIdFromUser, {
+            tokenIdentifier: `https://creative-starfish-84.clerk.accounts.dev|${result.data.public_user_data.user_id}`,
+            orgId: result.data.organization.id,
+            role: result.data.role === "org:admin" ? "admin" : "member",
+          });
+          break;
+
         default:
           break;
       }

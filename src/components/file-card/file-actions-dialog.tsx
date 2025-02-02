@@ -13,6 +13,7 @@ import { Trash2Icon, TriangleAlertIcon } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
 import { useToast } from "@/hooks/use-toast";
+import { ConvexError } from "convex/values";
 
 export const FileActionsDialog = ({
   open,
@@ -26,23 +27,38 @@ export const FileActionsDialog = ({
   const deleteFile = useMutation(api.files.deleteFile);
   const { toast } = useToast();
 
-  const handleDeleteFile = () => {
-    deleteFile({
-      fileId: file._id,
-    });
+  const handleDeleteFile = async () => {
+    try {
+      await deleteFile({
+        fileId: file._id,
+      });
 
-    toast({
-      description: (
-        <p className="flex items-center text-red-200 gap-2 font-medium">
-          <Trash2Icon />
-          <span>Your file has been deleted</span>
-        </p>
-      ),
-      variant: "destructive",
-      duration: 2500,
-    });
+      toast({
+        description: (
+          <p className="flex items-center gap-2 font-medium text-red-200">
+            <Trash2Icon />
+            <span>Your file has been deleted</span>
+          </p>
+        ),
+        variant: "destructive",
+        duration: 2500,
+      });
+    } catch (error: unknown) {
+      if (error instanceof ConvexError) {
+        toast({
+          title: "An error has occurred",
+          description: (
+            <p className="flex items-center gap-2 font-medium">
+              <TriangleAlertIcon />
+              <span>{error.data}</span>
+            </p>
+          ),
+          variant: "destructive",
+          duration: 2500,
+        });
+      }
+    }
   };
-
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogContent className="border border-red-500/50">
@@ -59,7 +75,7 @@ export const FileActionsDialog = ({
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/60 hover:text-destructive-foreground/80 transition-all duration-200 ease-in-out"
+            className="bg-destructive text-destructive-foreground transition-all duration-200 ease-in-out hover:bg-destructive/60 hover:text-destructive-foreground/80"
             onClick={handleDeleteFile}
           >
             Confirm

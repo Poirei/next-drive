@@ -25,9 +25,12 @@ const formSchema = z.object({
 
 export const SearchBar = ({
   setFiles,
+  favoritesOnly,
 }: {
   setFiles: Dispatch<SetStateAction<FileWithUrl[]>>;
+  favoritesOnly: boolean;
 }) => {
+  console.log("favs only: ", favoritesOnly);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -49,18 +52,19 @@ export const SearchBar = ({
       const searchedFiles = await convex.query(api.files.getSearchedFiles, {
         orgId: orgId,
         query: query as string,
+        favoritesOnly: favoritesOnly,
       });
 
       setFiles(searchedFiles);
     });
 
     return () => unsubscribe();
-  }, [form, convex, orgId, setFiles]);
+  }, [form, convex, orgId, setFiles, favoritesOnly]);
 
   return (
     <div>
       <Form {...form}>
-        <form className="flex items-center gap-x-1 ">
+        <form className="flex items-center gap-x-1">
           <FormField
             control={form.control}
             name="query"
@@ -70,7 +74,7 @@ export const SearchBar = ({
                   <Input
                     placeholder="Search for a file..."
                     {...field}
-                    className="rounded-full border bg-primary-foreground border-green-200 placeholder:text-green-300/85 placeholder:italic focus:placeholder-transparent"
+                    className="rounded-full border border-green-200 bg-primary-foreground placeholder:italic placeholder:text-green-300/85 focus:placeholder-transparent"
                   />
                 </FormControl>
                 <FormMessage />
@@ -81,10 +85,10 @@ export const SearchBar = ({
             type="submit"
             variant={"ghost"}
             className={
-              "bg-green-300/85 hover:bg-green-400/85 transition-all duration-200 ease-linear flex gap-x-3 rounded-full"
+              "flex gap-x-3 rounded-full bg-green-300/85 transition-all duration-200 ease-linear hover:bg-green-400/85"
             }
           >
-            <SearchIcon className="stroke-slate-900 rotate-90 stroke-[2.5]" />
+            <SearchIcon className="rotate-90 stroke-slate-900 stroke-[2.5]" />
           </Button>
         </form>
       </Form>

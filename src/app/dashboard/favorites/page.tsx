@@ -20,5 +20,5 @@ export default async function Page() {
     }
   );
 
-  return <Files headerTitle="Favorites" preloadedFiles={preloadedFiles} />;
+  return <Files headerTitle="Favorites" preloadedFiles={preloadedFiles} favoritesOnly />;
 }

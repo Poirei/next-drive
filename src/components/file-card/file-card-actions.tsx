@@ -16,18 +16,20 @@ import {
 import { FileActionsDialog } from "./file-actions-dialog";
 import { Button } from "../ui/button";
 import { useState } from "react";
-import { Doc } from "../../../convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
 import { api } from "@/convex/_generated/api";
 import { useMutation } from "convex/react";
+import { FileWithUrl } from "@/convex/types";
+import { Protect } from "@clerk/nextjs";
 
 export const FileCardActions = ({
   file,
   className,
 }: {
-  file: Doc<"files">;
+  file: FileWithUrl;
   className?: string;
 }) => {
+  console.log(file);
   const [open, setOpen] = useState(false);
   const toggleFavorite = useMutation(api.files.toggleFavorite);
 
@@ -39,19 +41,19 @@ export const FileCardActions = ({
       <DropdownMenu>
         <DropdownMenuTrigger
           className={cn(
-            "rounded-full hover:bg-secondary/70 p-2 border border-gray-700",
-            className
+            "rounded-full border border-gray-700 p-2 hover:bg-secondary/70",
+            className,
           )}
         >
           <EllipsisVerticalIcon size={18} />
         </DropdownMenuTrigger>
-        <DropdownMenuContent>
+        <DropdownMenuContent className="bg-transparent backdrop-blur-xl">
           <DropdownMenuItem
-            className="focus:bg-green-700/50 hover:bg-green-700/50 focus:text-green-400 hover:text-green-400 text-green-500 transition-all duration-150 ease-linear cursor-pointer"
+            className="cursor-pointer bg-lime-700/20 text-lime-500 transition-all duration-150 ease-linear hover:bg-lime-700/50 hover:text-lime-400 focus:bg-lime-700/50 focus:text-lime-400"
             asChild
           >
             <Button
-              className="bg-transparent w-full focus-visible:ring-0 flex justify-start"
+              className="flex w-full justify-start focus-visible:ring-0"
               variant={"ghost"}
             >
               <HardDriveDownloadIcon />
@@ -60,11 +62,11 @@ export const FileCardActions = ({
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            className="bg-fuchsia-700/40 focus:bg-fuchsia-700/50 hover:bg-fuchsia-700/50 focus:text-fuchsia-400 hover:text-fuchsia-400 text-fuchsia-500 transition-all duration-150 ease-linear cursor-pointer"
+            className="cursor-pointer bg-fuchsia-700/20 text-fuchsia-500 transition-all duration-150 ease-linear hover:bg-fuchsia-700/50 hover:text-fuchsia-400 focus:bg-fuchsia-700/50 focus:text-fuchsia-400"
             asChild
           >
             <Button
-              className="bg-transparent w-full focus-visible:ring-0 flex justify-start"
+              className="flex w-full justify-start focus-visible:ring-0"
               variant={"ghost"}
               onClick={async () => {
                 await toggleFavorite({
@@ -72,24 +74,26 @@ export const FileCardActions = ({
                 });
               }}
             >
-              <HeartIcon />
-              Favorite
+              <HeartIcon fill={file.isFavorited ? "currentColor" : "none"} />
+              {file.isFavorited ? "Unfavorite" : "Favorite"}
             </Button>
           </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            className="focus:bg-destructive/50 hover:bg-destructive/50 focus:text-red-400 hover:text-red-400 text-rose-500 transition-all duration-200 ease-linear cursor-pointer"
-            asChild
-          >
-            <Button
-              variant={"ghost"}
-              className="bg-transparent w-full focus-visible:ring-0 flex justify-start"
-              onClick={handleOpenConfirmationDialog}
+          <Protect role="org:admin" fallback={<></>}>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="cursor-pointer bg-pink-700/20 text-pink-500 transition-all duration-200 ease-linear hover:bg-pink-700/50 hover:text-pink-400 focus:bg-pink-700/50 focus:text-pink-400"
+              asChild
             >
-              <Trash2Icon />
-              Delete
-            </Button>
-          </DropdownMenuItem>
+              <Button
+                variant={"ghost"}
+                className="flex w-full justify-start focus-visible:ring-0"
+                onClick={handleOpenConfirmationDialog}
+              >
+                <Trash2Icon />
+                Delete
+              </Button>
+            </DropdownMenuItem>
+          </Protect>
         </DropdownMenuContent>
       </DropdownMenu>
     </>

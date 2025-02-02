@@ -6,10 +6,10 @@ export default async function Layout({
   children: React.ReactNode;
 }) {
   return (
-    <main className="container mx-auto pt-20 h-full">
+    <main className="container mx-auto h-full pt-20">
       <div className="flex h-full pb-5">
         <SideNav />
-        <div className="w-full border border-gray-700 rounded-r-md h-full p-4">
+        <div className="h-full w-full rounded-r-2xl border border-gray-700 p-4">
           {children}
         </div>
       </div>

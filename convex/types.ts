@@ -8,4 +8,5 @@ export type FileWithUrl = {
   orgId: string;
   fileId: Id<"_storage">;
   url: string | null;
+  isFavorited: boolean;
 };
