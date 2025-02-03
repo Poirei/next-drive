@@ -8,6 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  EllipsisIcon,
   EllipsisVerticalIcon,
   HardDriveDownloadIcon,
   HeartIcon,
@@ -28,9 +29,11 @@ import { useToast } from "@/hooks/use-toast";
 export const FileCardActions = ({
   file,
   className,
+  ellipsisDirection = "vertical",
 }: {
   file: FileWithUrl;
   className?: string;
+  ellipsisDirection: "horizontal" | "vertical";
 }) => {
   const toggleFavorite = useMutation(api.files.toggleFavorite);
   const restoreFile = useMutation(api.files.restoreFile);
@@ -66,7 +69,11 @@ export const FileCardActions = ({
             className,
           )}
         >
-          <EllipsisVerticalIcon size={18} />
+          {ellipsisDirection === "vertical" ? (
+            <EllipsisVerticalIcon size={18} />
+          ) : (
+            <EllipsisIcon size={18} />
+          )}
         </DropdownMenuTrigger>
         <DropdownMenuContent className="bg-transparent backdrop-blur-xl">
           <DropdownMenuItem

@@ -10,6 +10,8 @@ import Upload from "../upload";
 import { FileBrowserHeader } from "../file-browser/file-browser-header";
 import { FileWithUrl } from "@/convex/types";
 import { Separator } from "../ui/separator";
+import { DataTable } from "../file-browser/data-table";
+import { columns } from "../file-browser/columns";
 
 export function Files({
   headerTitle,
@@ -24,6 +26,8 @@ export function Files({
 }) {
   const initialFiles = usePreloadedQuery(preloadedFiles);
   const [files, setFiles] = useState<FileWithUrl[]>(initialFiles);
+
+  console.log(files);
 
   useEffect(() => {
     setFiles(() => initialFiles);
@@ -75,6 +79,7 @@ export function Files({
           <Separator className="mt-4 bg-slate-800" />
         </>
       )}
+      <DataTable columns={columns} data={files} />
       <div
         className={clsx(
           `grid ${files && files.length ? "grid-cols-1 md:grid-cols-4" : "grid-cols-1 justify-items-center"} mt-10 gap-14 px-2 md:px-0`,

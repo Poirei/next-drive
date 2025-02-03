@@ -8,8 +8,7 @@ import {
 } from "./_generated/server";
 import { getUser } from "./users";
 import { fileTypes } from "./schema";
-import { Id } from "./_generated/dataModel";
-import { FileWithUrl } from "./types";
+import { ConvexFile, FileWithUrl } from "./types";
 
 const hasAccessToOrg = async (
   ctx: QueryCtx | MutationCtx,
@@ -50,12 +49,15 @@ export const createFile = mutation({
       );
     }
 
+    const user = await getUser(ctx, identity.tokenIdentifier);
+
     return ctx.db.insert("files", {
       name: args.name,
       orgId: args.orgId,
       fileId: args.fileId,
       type: args.type,
       shouldDelete: false,
+      userId: user._id,
     });
   },
 });
@@ -83,15 +85,7 @@ export const getFiles = query({
       throw new ConvexError("You are not authorized to view this organization");
     }
 
-    let files: {
-      _id: Id<"files">;
-      _creationTime: number;
-      name: string;
-      type: "image" | "csv" | "pdf" | "txt";
-      orgId: string;
-      fileId: Id<"_storage">;
-      shouldDelete: boolean;
-    }[] = [];
+    let files: ConvexFile[] = [];
 
     const user = await getUser(ctx, identity.tokenIdentifier);
 
@@ -143,6 +137,49 @@ export const getFiles = query({
         isFavorited: favorites.some((favorite) => favorite.fileId === file._id),
       })),
     );
+  },
+});
+
+export const getFileById = query({
+  args: { fileId: v.id("files"), orgId: v.string(), userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new ConvexError("You must be logged in");
+    }
+
+    const file = await ctx.db.get(args.fileId);
+
+    if (!file) {
+      throw new ConvexError("File doesn't exist");
+    }
+
+    const hasAccess = await hasAccessToOrg(
+      ctx,
+      file.orgId,
+      identity.tokenIdentifier,
+    );
+
+    if (!hasAccess) {
+      throw new ConvexError("You are not authorized to access this file");
+    }
+
+    const favorite = await ctx.db
+      .query("favorites")
+      .withIndex("by_user_id_and_org_id_and_file_id", (q) =>
+        q
+          .eq("userId", args.userId)
+          .eq("orgId", args.orgId)
+          .eq("fileId", args.fileId),
+      )
+      .unique();
+
+    return {
+      ...file,
+      url: await ctx.storage.getUrl(file.fileId),
+      isFavorited: favorite ? true : false,
+    };
   },
 });
 
@@ -281,15 +318,7 @@ export const getSearchedFiles = query({
       );
     }
 
-    let files: {
-      _id: Id<"files">;
-      _creationTime: number;
-      name: string;
-      type: "image" | "csv" | "pdf" | "txt";
-      orgId: string;
-      fileId: Id<"_storage">;
-      shouldDelete: boolean;
-    }[] = [];
+    let files;
 
     const user = await getUser(ctx, identity.tokenIdentifier);
 

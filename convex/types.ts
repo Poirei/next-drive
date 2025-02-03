@@ -8,6 +8,18 @@ export type FileWithUrl = {
   orgId: string;
   fileId: Id<"_storage">;
   shouldDelete: boolean;
+  userId: Id<"users">;
   url: string | null;
   isFavorited: boolean;
+};
+
+export type ConvexFile = {
+  _id: Id<"files">;
+  _creationTime: number;
+  name: string;
+  type: "image" | "csv" | "pdf" | "txt";
+  orgId: string;
+  fileId: Id<"_storage">;
+  shouldDelete: boolean;
+  userId: Id<"users">;
 };

@@ -1,10 +1,17 @@
 import { ConvexError, v } from "convex/values";
-import { internalMutation, MutationCtx, QueryCtx } from "./_generated/server";
+import {
+  internalMutation,
+  MutationCtx,
+  query,
+  QueryCtx,
+} from "./_generated/server";
 import { roles } from "./schema";
 
 export const createUser = internalMutation({
   args: {
     tokenIdentifier: v.string(),
+    name: v.optional(v.string()),
+    avatarUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await ctx.db.insert("users", {
@@ -13,6 +20,22 @@ export const createUser = internalMutation({
     });
 
     return user;
+  },
+});
+
+export const updateUser = internalMutation({
+  args: {
+    tokenIdentifier: v.string(),
+    name: v.optional(v.string()),
+    avatarUrl: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const user = await getUser(ctx, args.tokenIdentifier);
+
+    await ctx.db.patch(user._id, {
+      name: args.name,
+      avatarUrl: args.avatarUrl,
+    });
   },
 });
 
@@ -101,6 +124,20 @@ export const removeOrgIdFromUser = internalMutation({
     } catch (error) {
       throw error;
     }
+  },
+});
+
+export const getUserProfile = query({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+
+    return {
+      name: user?.name,
+      avatarUrl: user?.avatarUrl,
+    };
   },
 });
 

@@ -57,6 +57,8 @@ export const SearchBar = ({
         deletedOnly: deletedOnly ?? false,
       });
 
+      console.log("searched files:", searchedFiles);
+
       setFiles(searchedFiles);
     });
 
