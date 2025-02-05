@@ -17,7 +17,7 @@ import { useConvex } from "convex/react";
 import { useOrganization } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
 import { SearchIcon } from "lucide-react";
-import { FileWithUrl } from "@/convex/types";
+import { ConvexFile, FileWithUrl } from "@/convex/types";
 
 const formSchema = z.object({
   query: z.string().max(255, "Title is too long"),
@@ -27,10 +27,12 @@ export const SearchBar = ({
   setFiles,
   favoritesOnly,
   deletedOnly,
+  filter,
 }: {
   setFiles: Dispatch<SetStateAction<FileWithUrl[]>>;
   favoritesOnly?: boolean;
   deletedOnly?: boolean;
+  filter: ConvexFile["type"];
 }) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -55,15 +57,14 @@ export const SearchBar = ({
         query: query as string,
         favoritesOnly: favoritesOnly ?? false,
         deletedOnly: deletedOnly ?? false,
+        type: filter,
       });
-
-      console.log("searched files:", searchedFiles);
 
       setFiles(searchedFiles);
     });
 
     return () => unsubscribe();
-  }, [form, convex, orgId, setFiles, favoritesOnly, deletedOnly]);
+  }, [form, convex, orgId, setFiles, favoritesOnly, deletedOnly, filter]);
 
   return (
     <div>

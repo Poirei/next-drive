@@ -1,12 +1,13 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { Doc, Id } from "@/convex/_generated/dataModel";
+import { Id } from "@/convex/_generated/dataModel";
 import { formatRelative } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { FileCardActions } from "../file-card/file-card-actions";
+import { FileWithUrl } from "@/convex/types";
 
 function UserCell({ userId }: { userId: Id<"users"> }) {
   const uploaderProfile = useQuery(api.users.getUserProfile, {
@@ -49,7 +50,7 @@ function FileActionsCell({
   return <FileCardActions file={file} ellipsisDirection="horizontal" />;
 }
 
-export const columns: ColumnDef<Doc<"files">>[] = [
+export const columns: ColumnDef<FileWithUrl>[] = [
   {
     accessorKey: "name",
     header: "Name",

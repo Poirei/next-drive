@@ -1,4 +1,4 @@
-import { Doc } from "../../convex/_generated/dataModel";
+import { FileWithUrl } from "@/convex/types";
 import { FileImageIcon, FileTextIcon, FileType2Icon } from "lucide-react";
 
 export const fileTypeToIconMap = {
@@ -12,7 +12,7 @@ export const fileTypeToIconMap = {
     <FileImageIcon className={className} style={style} />
   ),
 } as Record<
-  Doc<"files">["type"],
+  FileWithUrl["type"],
   ({
     className,
     style,

@@ -4,7 +4,7 @@ export type FileWithUrl = {
   _id: Id<"files">;
   _creationTime: number;
   name: string;
-  type: "image" | "csv" | "pdf" | "txt";
+  type: "image" | "csv" | "pdf" | "txt" | "all";
   orgId: string;
   fileId: Id<"_storage">;
   shouldDelete: boolean;
@@ -17,7 +17,7 @@ export type ConvexFile = {
   _id: Id<"files">;
   _creationTime: number;
   name: string;
-  type: "image" | "csv" | "pdf" | "txt";
+  type: "image" | "csv" | "pdf" | "txt" | "all";
   orgId: string;
   fileId: Id<"_storage">;
   shouldDelete: boolean;

@@ -67,6 +67,7 @@ export const getFiles = query({
     orgId: v.string(),
     onlyFetchFavorites: v.optional(v.boolean()),
     onlyFetchToBeDeleted: v.optional(v.boolean()),
+    type: v.optional(v.union(fileTypes, v.literal("all"))),
   },
   handler: async (ctx, args): Promise<FileWithUrl[]> => {
     const identity = await ctx.auth.getUserIdentity();
@@ -115,6 +116,11 @@ export const getFiles = query({
           await Promise.all(
             favorites.map(async (favorite) => {
               const file = await ctx.db.get(favorite.fileId);
+
+              if (!file || file?.shouldDelete) {
+                return null;
+              }
+
               return file;
             }),
           )
@@ -128,6 +134,10 @@ export const getFiles = query({
             query.eq("orgId", args.orgId).eq("shouldDelete", false),
           )
           .collect();
+    }
+
+    if (args.type && args.type !== "all") {
+      files = files.filter((file) => file.type === args.type);
     }
 
     return Promise.all(
@@ -210,23 +220,25 @@ export const deleteFile = mutation({
       throw new ConvexError("File doesn't exist");
     }
 
-    const hasAccess = await hasAccessToOrg(
-      ctx,
-      file.orgId,
-      identity.tokenIdentifier,
-    );
+    if (!identity.tokenIdentifier.includes(file.orgId)) {
+      const hasAccess = await hasAccessToOrg(
+        ctx,
+        file.orgId,
+        identity.tokenIdentifier,
+      );
 
-    if (!hasAccess) {
-      throw new ConvexError("You are not authorized to delete this file");
-    }
+      if (!hasAccess) {
+        throw new ConvexError("You are not authorized to delete this file");
+      }
 
-    const user = await getUser(ctx, identity.tokenIdentifier);
-    const isAdmin = user.orgIds.some(
-      (org) => org.orgId === file.orgId && org.role === "admin",
-    );
+      const user = await getUser(ctx, identity.tokenIdentifier);
+      const isAdmin = user.orgIds.some(
+        (org) => org.orgId === file.orgId && org.role === "admin",
+      );
 
-    if (!isAdmin) {
-      throw new ConvexError("You are not authorized to delete this file");
+      if (!isAdmin) {
+        throw new ConvexError("You are not authorized to delete this file");
+      }
     }
 
     await ctx.db.patch(args.fileId, {
@@ -267,23 +279,25 @@ export const restoreFile = mutation({
       throw new ConvexError("File doesn't exist");
     }
 
-    const hasAccess = await hasAccessToOrg(
-      ctx,
-      file.orgId,
-      identity.tokenIdentifier,
-    );
+    if (!identity.tokenIdentifier.includes(file.orgId)) {
+      const hasAccess = await hasAccessToOrg(
+        ctx,
+        file.orgId,
+        identity.tokenIdentifier,
+      );
 
-    if (!hasAccess) {
-      throw new ConvexError("You are not authorized to restore this file");
-    }
+      if (!hasAccess) {
+        throw new ConvexError("You are not authorized to restore this file");
+      }
 
-    const user = await getUser(ctx, identity.tokenIdentifier);
-    const isAdmin = user.orgIds.some(
-      (org) => org.orgId === file.orgId && org.role === "admin",
-    );
+      const user = await getUser(ctx, identity.tokenIdentifier);
+      const isAdmin = user.orgIds.some(
+        (org) => org.orgId === file.orgId && org.role === "admin",
+      );
 
-    if (!isAdmin) {
-      throw new ConvexError("You are not authorized to restore this file");
+      if (!isAdmin) {
+        throw new ConvexError("You are not authorized to restore this file");
+      }
     }
 
     await ctx.db.patch(args.fileId, {
@@ -298,6 +312,7 @@ export const getSearchedFiles = query({
     query: v.string(),
     favoritesOnly: v.boolean(),
     deletedOnly: v.boolean(),
+    type: v.optional(v.union(fileTypes, v.literal("all"))),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -364,6 +379,10 @@ export const getSearchedFiles = query({
       if (args.deletedOnly) {
         files = files.filter((file) => file.shouldDelete);
       }
+    }
+
+    if (args.type && args.type !== "all") {
+      files = files.filter((file) => file.type === args.type);
     }
 
     return Promise.all(

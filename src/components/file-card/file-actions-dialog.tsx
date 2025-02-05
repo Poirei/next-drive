@@ -11,9 +11,9 @@ import {
 import { useMutation } from "convex/react";
 import { Trash2Icon, TriangleAlertIcon } from "lucide-react";
 import { api } from "@/convex/_generated/api";
-import type { Doc } from "@/convex/_generated/dataModel";
 import { useToast } from "@/hooks/use-toast";
 import { ConvexError } from "convex/values";
+import { FileWithUrl } from "@/convex/types";
 
 export const FileActionsDialog = ({
   open,
@@ -22,7 +22,7 @@ export const FileActionsDialog = ({
 }: {
   open: boolean;
   setOpen: (open: boolean) => void;
-  file: Doc<"files">;
+  file: FileWithUrl;
 }) => {
   const deleteFile = useMutation(api.files.deleteFile);
   const { toast } = useToast();

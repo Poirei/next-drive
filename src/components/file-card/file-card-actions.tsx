@@ -21,7 +21,7 @@ import { Button } from "../ui/button";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { api } from "@/convex/_generated/api";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { FileWithUrl } from "@/convex/types";
 import { Protect } from "@clerk/nextjs";
 import { useToast } from "@/hooks/use-toast";
@@ -39,6 +39,8 @@ export const FileCardActions = ({
   const restoreFile = useMutation(api.files.restoreFile);
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
+
+  const me = useQuery(api.users.getMe);
 
   const handleOpenConfirmationDialog = () => setOpen(true);
 
@@ -106,7 +108,12 @@ export const FileCardActions = ({
               {file.isFavorited ? "Unfavorite" : "Favorite"}
             </Button>
           </DropdownMenuItem>
-          <Protect role="org:admin" fallback={<></>}>
+          <Protect
+            condition={(check) =>
+              check({ role: "org:admin" }) || file.userId === me
+            }
+            fallback={<></>}
+          >
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className={cn(

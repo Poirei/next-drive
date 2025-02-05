@@ -31,7 +31,7 @@ export const FileCard = ({ file }: { file: FileWithUrl }) => {
   });
 
   return (
-    <Card className="relative border-red-900">
+    <Card className="relative h-full w-full border-red-900">
       <CardHeader className="flex h-12 flex-row items-center justify-between border-b border-gray-700 pt-4">
         <CardTitle className="flex items-end gap-x-2 text-sm font-medium">
           {TitleIcon}
@@ -50,6 +50,8 @@ export const FileCard = ({ file }: { file: FileWithUrl }) => {
             alt={file.name}
             width={200}
             height={200}
+            placeholder="blur"
+            blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+J9SDwAETgHk0DnFhAAAAABJRU5ErkJggg=="
             className="h-[200px] w-[200px] self-start object-cover"
           />
         ) : (
