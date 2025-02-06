@@ -22,7 +22,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${dmSans.className} antialiased h-screen`}>
+      <body
+        className={`${dmSans.className} h-screen bg-[url(/grainy_bg.webp)] bg-cover antialiased`}
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
