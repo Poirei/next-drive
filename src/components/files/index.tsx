@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { Suspense, useEffect, useState, useTransition } from "react";
 import { Preloaded, useConvex, usePreloadedQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { FileCard } from "../file-card/file-card";
@@ -107,7 +107,7 @@ export function Files({
   return (
     <>
       {isPending ? (
-        <div className="flex flex-col items-center gap-4">
+        <div className="mt-10 grid grid-cols-1 justify-items-center gap-14 px-2 md:px-0">
           <Loader2 className="h-10 w-10 animate-spin" />
           <p>Loading...</p>
         </div>
@@ -171,10 +171,14 @@ export function Files({
                     },
                   )}
                 >
-                  {files?.length > 0 &&
-                    files.map((file) => (
-                      <FileCard key={file._id} file={file} />
-                    ))}
+                  <Suspense
+                    fallback={<Loader2 className="h-10 w-10 animate-spin" />}
+                  >
+                    {files?.length > 0 &&
+                      files.map((file) => (
+                        <FileCard key={file._id} file={file} />
+                      ))}
+                  </Suspense>
                 </TabsContent>
                 <TabsContent value="table">
                   <DataTable columns={columns} data={files} />
@@ -185,9 +189,10 @@ export function Files({
           <div
             className={cn(
               "mt-10 grid grid-cols-1 justify-items-center gap-14 px-2 md:px-0",
-              {
-                "grid-cols-1 md:grid-cols-4": files && files.length,
-              },
+              // {
+              //   "grid-cols-1 md:grid-cols-4":
+              //     files && files.length && !isPending,
+              // },
             )}
           >
             {initialFiles?.length > 0 && files?.length === 0 && (
