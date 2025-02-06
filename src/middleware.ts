@@ -2,8 +2,11 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 const isDashboardRoute = createRouteMatcher(["/dashboard"]);
+const isPublicRoute = createRouteMatcher(["/"]);
 
-export default clerkMiddleware((_auth, req) => {
+export default clerkMiddleware(async (auth, req) => {
+  if (!isPublicRoute(req)) await auth.protect();
+
   if (isDashboardRoute(req)) {
     return NextResponse.redirect(new URL("/dashboard/files", req.url));
   }
