@@ -345,22 +345,31 @@ export const getSearchedFiles = query({
       .collect();
 
     if (args.query.length === 0) {
-      if (!args.favoritesOnly) {
-        files = await ctx.db
-          .query("files")
-          .withIndex("by_org_id", (q) => q.eq("orgId", args.orgId))
-          .collect();
-
-        if (args.deletedOnly) {
-          files = files.filter((file) => file.shouldDelete);
-        }
-      } else {
-        files = await Promise.all(
-          favFiles.map(async (favorite) => {
-            const file = await ctx.db.get(favorite.fileId);
-            return file as NonNullable<typeof file>;
-          }),
-        );
+      switch (true) {
+        case args.favoritesOnly:
+          files = await Promise.all(
+            favFiles.map(async (favorite) => {
+              const file = await ctx.db.get(favorite.fileId);
+              return file as NonNullable<typeof file>;
+            }),
+          );
+          break;
+        case args.deletedOnly:
+          files = await ctx.db
+            .query("files")
+            .withIndex("by_org_id_and_should_delete", (q) =>
+              q.eq("orgId", args.orgId).eq("shouldDelete", true),
+            )
+            .collect();
+          break;
+        default:
+          files = await ctx.db
+            .query("files")
+            .withIndex("by_org_id_and_should_delete", (q) =>
+              q.eq("orgId", args.orgId).eq("shouldDelete", false),
+            )
+            .collect();
+          break;
       }
     } else {
       files = await ctx.db

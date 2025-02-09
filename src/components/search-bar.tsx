@@ -14,7 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useConvex } from "convex/react";
-import { useOrganization } from "@clerk/nextjs";
+import { useOrganization, useUser } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
 import { SearchIcon } from "lucide-react";
 import { ConvexFile, FileWithUrl } from "@/convex/types";
@@ -41,14 +41,16 @@ export const SearchBar = ({
     },
   });
   const convex = useConvex();
-
-  const { organization } = useOrganization();
+  const { organization, isLoaded: isOrgLoaded } = useOrganization();
+  const { isLoaded: isUserLoaded, user } = useUser();
 
   let orgId = "";
 
-  if (organization) {
-    orgId = organization.id;
+  if (isOrgLoaded && isUserLoaded) {
+    orgId = organization?.id ?? user?.id ?? "";
   }
+
+  console.log(orgId);
 
   useEffect(() => {
     const { unsubscribe } = form.watch(async ({ query }) => {
@@ -59,6 +61,8 @@ export const SearchBar = ({
         deletedOnly: deletedOnly ?? false,
         type: filter,
       });
+
+      console.log("Files: ", searchedFiles);
 
       setFiles(searchedFiles);
     });

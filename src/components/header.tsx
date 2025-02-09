@@ -1,11 +1,17 @@
-import { OrganizationSwitcher, SignInButton, UserButton } from "@clerk/nextjs";
-import { auth } from "@clerk/nextjs/server";
+"use client";
+
+import {
+  OrganizationSwitcher,
+  SignInButton,
+  UserButton,
+  useSession,
+} from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
 import SvgIcon from "./logo";
 import { InteractiveHoverButton } from "./ui/interactive-hover-button";
 
-export async function Header() {
-  const { sessionId } = await auth();
+export function Header() {
+  const { session } = useSession();
 
   return (
     <header className="fixed z-50 w-full border-b bg-background/50 py-3 backdrop-blur">
@@ -18,7 +24,7 @@ export async function Header() {
           </p>
         </div>
         <div className="flex gap-2">
-          {sessionId ? (
+          {session?.id ? (
             <>
               <OrganizationSwitcher
                 appearance={{
